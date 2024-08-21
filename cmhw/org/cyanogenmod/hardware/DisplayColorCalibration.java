@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2017 The LineageOS Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.cyanogenmod.hardware;
 
 import android.os.IBinder;
@@ -29,31 +13,29 @@ public class DisplayColorCalibration {
 
     private static final String TAG = "DisplayColorCalibration";
 
-    private static final String RGB_FILE = "/sys/class/mdnie/mdnie/sensorRGB";
+    private static final String RGB_FILE = "/sys/class/graphics/fb0/rgb"; // Hypothetical path
 
     private static final boolean sUseGPUMode;
 
-    private static final int MIN = 1;
+    private static final int MIN = 0;
     private static final int MAX = 255;
 
     private static final int[] sCurColors = new int[] { MAX, MAX, MAX };
 
     static {
-        // We can also support GPU transform using RenderEngine. This is not
-        // preferred though, as it has a high power cost.
+        // Check if GPU mode is relevant
         sUseGPUMode = SystemProperties.getBoolean("debug.livedisplay.force_gpu", false);
     }
 
     public static boolean isSupported() {
-
         return true;
     }
 
-    public static int getMaxValue()  {
+    public static int getMaxValue() {
         return MAX;
     }
 
-    public static int getMinValue()  {
+    public static int getMinValue() {
         return MIN;
     }
 
@@ -61,13 +43,12 @@ public class DisplayColorCalibration {
         return getMaxValue();
     }
 
-    public static String getCurColors()  {
+    public static String getCurColors() {
         if (!sUseGPUMode) {
             return FileUtils.readOneLine(RGB_FILE);
         }
 
-        return String.format("%d %d %d", sCurColors[0],
-                sCurColors[1], sCurColors[2]);
+        return String.format("%d %d %d", sCurColors[0], sCurColors[1], sCurColors[2]);
     }
 
     public static boolean setColors(String colors) {
@@ -77,10 +58,8 @@ public class DisplayColorCalibration {
 
         float[] mat = toColorMatrix(colors);
 
-        // set to null if identity
-        if (mat == null ||
-                (mat[0] == 1.0f && mat[5] == 1.0f &&
-                 mat[10] == 1.0f && mat[15] == 1.0f)) {
+        // Set to null if identity
+        if (mat == null || (mat[0] == 1.0f && mat[5] == 1.0f && mat[10] == 1.0f && mat[15] == 1.0f)) {
             return setColorTransform(null);
         }
         return setColorTransform(mat);
@@ -95,7 +74,7 @@ public class DisplayColorCalibration {
 
         float[] mat = new float[16];
 
-        // sanity check
+        // Sanity check
         for (int i = 0; i < 3; i++) {
             int v = Integer.parseInt(adj[i]);
 
@@ -114,7 +93,7 @@ public class DisplayColorCalibration {
     }
 
     /**
-     * Sets the surface flinger's color transformation as a 4x4 matrix. If the
+     * Sets the SurfaceFlinger's color transformation as a 4x4 matrix. If the
      * matrix is null, color transformations are disabled.
      *
      * @param m the float array that holds the transformation matrix, or null to
@@ -143,5 +122,4 @@ public class DisplayColorCalibration {
         }
         return true;
     }
-
 }
